@@ -1,0 +1,196 @@
+---
+title: "covid19_project"
+author: "Peter Mehler"
+date: "3/18/2020"
+output: html_document
+---
+data set: https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series
+
+```{r}
+confirmed_cases <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+
+deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")
+
+recovered <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")
+```
+
+
+# Compare S.Korea increase to Hubei?
+# Slope of cases in hubei compared to Italy/S.K???
+# CREATE FUNCTION TO MAKE DATA SETS
+
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+us <- confirmed_cases %>% 
+  filter(Province.State=="New York" | Province.State=="Washington" |Province.State=="California" | Province.State=="New Jersey" | Province.State=="Massachusetts" | Province.State=="Florida") %>% 
+  gather(key = X1.22.20, value = cases, 5:60) %>% 
+  mutate(date = sub("X", "", X1.22.20)) %>% 
+  select(-X1.22.20) %>% 
+  mutate(date = as.Date(date,format="%m.%d.%y"))
+```
+
+```{r}
+us_plot <- ggplot(data = us, aes(x=date, y=cases, group = Province.State, color = Province.State)) +
+  labs(title = "title") +
+  #theme(axis.text.x = element_text(angle = 90)) +
+  geom_line() +
+  xlim(as.Date("3.5.20",format="%m.%d.%y"),as.Date("3.19.20",format="%m.%d.%y"))
+
+us_plot
+```
+# Clean Hubei Data
+```{r}
+# region == 1 means country, region == 2 means province
+clean_data <- function(name, region){
+   if (region==1){
+    temp_deaths <- deaths %>% 
+      filter(Country.Region==name) %>% 
+      gather(key = X1.22.20, value = deaths, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
+      mutate(date = sub("X", "", X1.22.20)) %>% 
+      select(-X1.22.20) %>% 
+      mutate(date = as.Date(date,format="%m.%d.%y")) %>% 
+      select(deaths, date)
+    
+    temp_recovered <- recovered %>% 
+      filter(Country.Region==name) %>% 
+      gather(key = X1.22.20, value = recovered, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
+      mutate(date = sub("X", "", X1.22.20)) %>% 
+      select(-X1.22.20) %>% 
+      mutate(date = as.Date(date,format="%m.%d.%y")) %>% 
+      select(recovered, date)
+      
+    temp_cases <- confirmed_cases %>% 
+      filter(Country.Region==name) %>% 
+      gather(key = X1.22.20, value = cases, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
+      mutate(date = sub("X", "", X1.22.20)) %>% 
+      select(-X1.22.20) %>% 
+      mutate(date = as.Date(date,format="%m.%d.%y"))
+    
+    temp_cases <- left_join(temp_cases, temp_deaths, "date")
+    temp_cases <- left_join(temp_cases, temp_recovered, "date")
+    
+    temp_cases <- temp_cases %>%
+      gather(key = type, value = amount, cases, recovered, deaths)
+  
+    return(temp_cases)
+  }
+  
+  else{
+    temp_deaths <- deaths %>% 
+      filter(Province.State==name) %>% 
+      gather(key = X1.22.20, value = deaths, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
+      mutate(date = sub("X", "", X1.22.20)) %>% 
+      select(-X1.22.20) %>% 
+      mutate(date = as.Date(date,format="%m.%d.%y")) %>% 
+      select(deaths, date)
+    
+    temp_recovered <- recovered %>% 
+      filter(Province.State==name) %>% 
+      gather(key = X1.22.20, value = recovered, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
+      mutate(date = sub("X", "", X1.22.20)) %>% 
+      select(-X1.22.20) %>% 
+      mutate(date = as.Date(date,format="%m.%d.%y")) %>% 
+      select(recovered, date)
+      
+    temp_cases <- confirmed_cases %>% 
+      filter(Province.State==name) %>% 
+      gather(key = X1.22.20, value = cases, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
+      mutate(date = sub("X", "", X1.22.20)) %>% 
+      select(-X1.22.20) %>% 
+      mutate(date = as.Date(date,format="%m.%d.%y"))
+    
+    temp_cases <- left_join(temp_cases, temp_deaths, "date")
+    temp_cases <- left_join(temp_cases, temp_recovered, "date")
+    
+    temp_cases <- temp_cases %>%
+      gather(key = type, value = amount, cases, recovered, deaths)
+  
+    return(temp_cases)
+  }
+}
+```
+# CHOOSE YOUR COUNTRY OR PROVINCE
+region == 1 means country, region == 2 means province
+```{r}
+hubei <- clean_data("Hubei",2)
+```
+
+```{r}
+hubei %>% 
+  filter(type=="cases") %>% 
+  ggplot(aes(x=date, y=amount, group = 1)) +
+  labs(title = "hubei province, red line indicates Wuhan shutdown") +
+  #theme(axis.text.x = element_text(angle = 90)) +
+  geom_line() + 
+  geom_vline(xintercept = as.Date("1.23.20",format="%m.%d.%y"), 
+                color = "red", size=1) +
+  xlim(as.Date("1.22.20",format="%m.%d.%y"),as.Date("2.9.20",format="%m.%d.%y")) +
+  ylim(0,32000) +
+  geom_smooth()
+  
+temp <- hubei %>%
+  filter(type=="cases") %>%
+  mutate(date = as.integer(format(date, "%j")))
+
+slope = round(lm(temp$date~temp$amount)$coefficients[2],4)
+
+as.double(slope)*10000
+#Wuhan Lockdown January 23rd
+```
+```{r}
+ggplot(data = hubei, aes(date, amount, fill = type)) +
+  geom_bar(position="stack", stat = "identity")
+```
+# Italy Data
+```{r}
+italy <- clean_data("Italy",1)
+```
+
+# Italy Plot
+
+```{r}
+p <- italy %>% 
+  filter(type=="cases") %>% 
+  mutate(date = as.integer(format(date, "%j"))) %>% 
+  ggplot(aes(x=date, y=amount, group = 1)) +
+  labs(title = "italy", caption = ) +
+  geom_line() + 
+  geom_vline(xintercept = 60, 
+                color = "red", size=1) +
+  xlim(50,78) +
+  ylim(0,32000) +
+  geom_smooth(method = lm) +
+  theme_minimal()
+
+p
+
+as.double(slope)*10000
+#Italy Lockdown March 8th
+```
+
+mutate(group5 = rep(1:8, each = 7)) %>%
+  group_by(group5) %>%
+  mutate(
+    slope = round(lm(date ~ amount)$coefficients[2], 2),
+    x = mean(date),   # x coordinate for slope label
+    y = mean(amount))     # y coordinate for slope label
+
+p + geom_smooth(
+  data = prep5, aes(x = date, y = amount, group = group5),  # grouping variable does the plots for us!
+  method = "lm", se = FALSE, color = "black",
+  formula = y ~ x, linetype = "dashed"
+) +
+  geom_text(
+    data = prep5, aes(x = x, y = y, label = slope),
+    nudge_y = 12, nudge_x = -1
+  )
+
+
+
+
