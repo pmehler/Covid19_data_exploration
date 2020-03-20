@@ -155,7 +155,11 @@ hubei %>%
 ```
 ```{r}
 ggplot(data = hubei, aes(date, amount, fill = type)) +
-  geom_bar(position="stack", stat = "identity")
+  geom_bar(position="stack", stat = "identity") +
+  labs(title = "Cases, Deaths, and Recoveries in Hubei Province Through Time",
+       x = "Date",
+       y = "Amount") +
+  theme(legend.title=element_blank())
 ```
 
 # Italy Plot
@@ -174,7 +178,7 @@ italy %>%
   #geom_smooth(method = lm) +
   theme_minimal()
 
-# Perhaps there's a better way to calculate slope, I'm trying to avoid manual entry
+# Perhaps there's a better way to calculate slope, Trying to avoid manual entry
 # slope = round(lm(temp$date~temp$amount)$coefficients[2],4)
 # 
 # as.double(slope)*10000
@@ -182,16 +186,20 @@ italy %>%
 ```
 ```{r}
 ggplot(data = italy, aes(date, amount, fill = type)) +
-  geom_bar(position="stack", stat = "identity")
+  geom_bar(position="stack", stat = "identity") +
+  theme(legend.title=element_blank())
 ```
 ```{r}
 require(gridExtra)
 plot1 <- ggplot(data = italy, aes(date, amount, fill = type)) +
   geom_bar(position="fill", stat = "identity") +
-  labs(title = "Italy")
+  labs(title = "Percentages of Case Statistics Italy", y="Percent", x="Date") +
+  theme(legend.title=element_blank())
 plot2 <- ggplot(data = hubei, aes(date, amount, fill = type)) +
   geom_bar(position="fill", stat = "identity") +
-  labs(title = "Hubei")
+  labs(title = "Percentages of Case Statistics Hubei", y="Percent", x="Date") +
+  theme(legend.title=element_blank())
+
 grid.arrange(plot1, plot2, ncol=2)
 ```
 
@@ -213,9 +221,14 @@ ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
   geom_vline(xintercept = 1, color = "red", size=.25) + # Wuhan locks down
   geom_vline(xintercept = 11, color = "green", size=.25) + # Italy locks down
   geom_vline(xintercept = -1, color = "blue", size=.25) + # South Korea Socially Isolates
-  labs(x="Days since number of cases reached 400", y="Cumulative Cases", title = "Comparison of Cumulative Cases by Country Beginning When Number of Infections is Above 400", caption = "US is currently just NY data and China is currently just Hubei data") +
+  labs(x="Days since number of cases reached 400", 
+       y="Cumulative Cases", 
+       title = "Comparison of Cumulative Cases by Country Beginning When Number of Infections is Above 400", 
+       caption = "US represents only NY data and China represents only Hubei data") +
   ylim(0,NA) +
-  geom_smooth()
+  geom_smooth() +
+  theme(legend.title=element_blank())
+                        
 
 #Majority of people of South Korea decide to socially isolate 2.20.20 
 #Italy Lockdown 3.8.20
@@ -235,9 +248,13 @@ combined.countries <- combined.countries %>%
 ```{r}
 ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
   #geom_line() +
-  labs(x="Days since first Death", y="Cumulative Deaths", title = "Comparison of Cumulative Deaths by Country Beginning After First Death", caption = "US is currently just NY data and China is currently just Hubei data") +
+  labs(x="Days since first Death", 
+       y="Cumulative Deaths", 
+       title = "Comparison of Cumulative Deaths by Country Beginning After First Death", 
+       caption = "US represents only NY data and China represents only Hubei data") +
   ylim(0,NA) +
-  geom_smooth()
+  geom_smooth() +
+  theme(legend.title=element_blank())
 ```
 
 
