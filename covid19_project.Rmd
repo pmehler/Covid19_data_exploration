@@ -17,7 +17,7 @@ recovered <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19
 
 # Compare S.Korea increase to Hubei?
 # Slope of cases in hubei compared to Italy/S.K???
-# CREATE FUNCTION TO MAKE DATA SETS
+# Plot slopes on top of one another based on days since shutdown / First infection?
 
 
 ```{r}
@@ -29,7 +29,7 @@ library(ggplot2)
 ```{r}
 us <- confirmed_cases %>% 
   filter(Province.State=="New York" | Province.State=="Washington" |Province.State=="California" | Province.State=="New Jersey" | Province.State=="Massachusetts" | Province.State=="Florida") %>% 
-  gather(key = X1.22.20, value = cases, 5:60) %>% 
+  gather(key = X1.22.20, value = cases, 5:names(confirmed_cases)[length(names(confirmed_cases))]) %>% 
   mutate(date = sub("X", "", X1.22.20)) %>% 
   select(-X1.22.20) %>% 
   mutate(date = as.Date(date,format="%m.%d.%y"))
@@ -38,7 +38,6 @@ us <- confirmed_cases %>%
 ```{r}
 us_plot <- ggplot(data = us, aes(x=date, y=cases, group = Province.State, color = Province.State)) +
   labs(title = "title") +
-  #theme(axis.text.x = element_text(angle = 90)) +
   geom_line() +
   xlim(as.Date("3.5.20",format="%m.%d.%y"),as.Date("3.19.20",format="%m.%d.%y"))
 
@@ -120,59 +119,88 @@ region == 1 means country, region == 2 means province
 ```{r}
 hubei <- clean_data("Hubei",2)
 ```
+```{r}
+italy <- clean_data("Italy",1)
+```
+```{r}
+s.korea <- clean_data("Korea, South",1)
+```
+```{r}
+ny <- clean_data("New York",2)
+```
+
 
 ```{r}
 hubei %>% 
   filter(type=="cases") %>% 
   ggplot(aes(x=date, y=amount, group = 1)) +
   labs(title = "hubei province, red line indicates Wuhan shutdown") +
-  #theme(axis.text.x = element_text(angle = 90)) +
   geom_line() + 
   geom_vline(xintercept = as.Date("1.23.20",format="%m.%d.%y"), 
                 color = "red", size=1) +
-  xlim(as.Date("1.22.20",format="%m.%d.%y"),as.Date("2.9.20",format="%m.%d.%y")) +
-  ylim(0,32000) +
+  xlim(as.Date("1.23.20",format="%m.%d.%y"),NA) +
+  #ylim(0,32000) +
   geom_smooth()
   
-temp <- hubei %>%
-  filter(type=="cases") %>%
-  mutate(date = as.integer(format(date, "%j")))
-
-slope = round(lm(temp$date~temp$amount)$coefficients[2],4)
-
-as.double(slope)*10000
 #Wuhan Lockdown January 23rd
 ```
 ```{r}
 ggplot(data = hubei, aes(date, amount, fill = type)) +
   geom_bar(position="stack", stat = "identity")
 ```
-# Italy Data
-```{r}
-italy <- clean_data("Italy",1)
-```
 
 # Italy Plot
 
 ```{r}
-p <- italy %>% 
+italy %>% 
   filter(type=="cases") %>% 
-  mutate(date = as.integer(format(date, "%j"))) %>% 
   ggplot(aes(x=date, y=amount, group = 1)) +
-  labs(title = "italy", caption = ) +
+  labs(title = "italy", caption = "caption" ) +
   geom_line() + 
-  geom_vline(xintercept = 60, 
+  geom_vline(xintercept = as.Date("3.8.20",format="%m.%d.%y"), 
                 color = "red", size=1) +
-  xlim(50,78) +
-  ylim(0,32000) +
-  geom_smooth(method = lm) +
+  xlim(as.Date("3.8.20",format="%m.%d.%y"),NA) +
+  #ylim(0,32000) +
+  geom_smooth() +
+  #geom_smooth(method = lm) +
   theme_minimal()
 
-p
+# Perhaps there's a better way to calculate slope, I'm trying to avoid manual entry
+temp <- italy %>%
+  filter(type=="cases") %>%
+  filter(amount>400) %>% 
+  mutate(date = as.integer(format(date, "%j"))) %>% 
+  mutate(date = date - date[1])
 
-as.double(slope)*10000
+ggplot(data = temp, aes(date, amount, group = 1))+
+  geom_line() +
+  labs(x="days since number of cases reached 400")
+# slope = round(lm(temp$date~temp$amount)$coefficients[2],4)
+# 
+# as.double(slope)*10000
 #Italy Lockdown March 8th
 ```
+```{r}
+# Row combine all datasets from Italy, SK, Hubei
+combined.countries <- rbind(hubei, italy, s.korea, ny)
+
+combined.countries <- combined.countries %>%
+  filter(type=="cases") %>%   # Have filtered by cases
+  filter(amount>400) %>%    # Filter cases > 400
+  group_by(Country.Region) %>% 
+  mutate(date = as.integer(format(date, "%j"))) %>% 
+  mutate(date = date - date[1]) # Change date to days since cases > 400
+```
+```{r}
+ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
+  geom_line()
+```
+
+
+
+Finding regression line for different subsets of data:
+
+Source: https://stackoverflow.com/questions/51355303/extract-slope-of-multiple-trend-lines-from-geom-smooth
 
 mutate(group5 = rep(1:8, each = 7)) %>%
   group_by(group5) %>%
