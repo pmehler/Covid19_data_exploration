@@ -113,7 +113,7 @@ clean_data <- function(name, region){
 }
 ```
 # CHOOSE YOUR COUNTRY OR PROVINCE
-Only works for Countries without several provinces and single provinces
+Only works for Countries without several provinces and single provinces \n
 region == 1 means country, region == 2 means province
 ```{r}
 hubei <- clean_data("Hubei", 2)
@@ -127,6 +127,14 @@ s.korea <- clean_data("Korea, South", 1)
 ```{r}
 ny <- clean_data("New York", 2)
 ```
+```{r}
+iran <- clean_data("Iran", 1)
+```
+```{r}
+spain <- clean_data("Spain",1)
+```
+
+
 ```{r}
 # Works for countries with several provinces
 us_total <- confirmed_cases %>% 
@@ -209,7 +217,7 @@ grid.arrange(plot1, plot2, ncol=2)
 
 ```{r}
 # Row combine all datasets from Italy, SK, Hubei, New York
-combined.countries <- rbind(hubei, italy, s.korea, ny)
+combined.countries <- rbind(hubei, italy, s.korea, ny, iran, spain)
 
 combined.countries <- combined.countries %>%
   filter(type=="cases") %>%   # Have filtered by cases
@@ -221,26 +229,45 @@ combined.countries <- combined.countries %>%
 ```{r}
 ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
   #geom_line() +
-  geom_vline(xintercept = 1, color = "red", size=.25) + # Wuhan locks down
-  geom_vline(xintercept = 11, color = "green", size=.25) + # Italy locks down
-  geom_vline(xintercept = -1, color = "blue", size=.25) + # South Korea Socially Isolates
+  # geom_vline(xintercept = 1, color = "red", size=.25) + # Wuhan locks down
+  # geom_vline(xintercept = 11, color = "green", size=.25) + # Italy locks down
+  # geom_vline(xintercept = -1, color = "blue", size=.25) + # South Korea Socially Isolates
+  # geom_vline(xintercept = 8, color = "purple", size=.25) + # NY State orders lockdown
   labs(x="Days since number of cases reached 400", 
        y="Cumulative Cases", 
        title = "Comparison of Cumulative Cases by Country",
        subtitle = "Beginning When Number of Infections is Above 400",
        caption = "US represents only NY data and China represents only Hubei data") +
+  xlim(0,NA) +
   ylim(0,NA) +
-  geom_smooth() +
+  geom_smooth(size=.75) +
   theme(legend.title=element_blank())
                         
 
 #Majority of people of South Korea decide to socially isolate 2.20.20 
 #Italy Lockdown 3.8.20
 #Wuhan Lockdown 1.23.20
+#NY State orders lockdown
 ```
 ```{r}
+ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
+  #geom_line() +
+  labs(x="Days since number of cases reached 400", 
+       y="Cumulative Cases", 
+       title = "Exponential Projections of Cumulative Cases by Country",
+       subtitle = "Beginning When Number of Infections is Above 400",
+       caption = "US represents only NY data and China represents only Hubei data") +
+  xlim(NA,50) +
+  ylim(0,NA) +
+  #geom_smooth(size=.75) +
+  theme(legend.title=element_blank()) +
+  scale_y_log10() +
+  stat_smooth(method="lm",fullrange=TRUE)
+```
+
+```{r}
 # Row combine all datasets from Italy, SK, Hubei, New York
-combined.countries <- rbind(hubei, italy, s.korea, ny)
+combined.countries <- rbind(hubei, italy, s.korea, ny, iran)
 
 combined.countries <- combined.countries %>%
   filter(type=="deaths") %>%   # Have filtered by deaths
@@ -259,6 +286,31 @@ ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
   ylim(0,NA) +
   geom_smooth() +
   theme(legend.title=element_blank())
+
+```
+```{r}
+# Row combine all datasets from Italy, SK, Hubei, New York
+combined.countries <- rbind(hubei, italy, s.korea, iran)
+
+combined.countries <- combined.countries %>%
+  filter(type=="deaths") %>%   # Have filtered by deaths
+  filter(amount>0) %>%    # Filter cases > 0
+  group_by(Country.Region) %>% 
+  mutate(date = as.integer(format(date, "%j"))) %>% 
+  mutate(date = date - date[1]) # Change date to days since first death
+```
+```{r}
+ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
+  #geom_line() +
+  labs(x="Days since first Death", 
+       y="Cumulative Deaths", 
+       title = "Exponential Projections of Cumulative Deaths by Country Beginning After First Death", 
+       caption = "US represents only NY data and China represents only Hubei data") +
+  ylim(0,NA) +
+  #geom_smooth() +
+  theme(legend.title=element_blank()) +
+  scale_y_log10() +
+  stat_smooth(method="lm",fullrange=TRUE)
 ```
 
 
