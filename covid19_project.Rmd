@@ -16,6 +16,10 @@ recovered <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19
 
 #TO DO:
 Slope analysis / Comparison?
+Make multiple province countries functional with clean_data()
+Plot Predictive values extending from log of reported infections
+Look at Active cases are calculated as, Active cases = Confirmed cases - Deaths reported - Recovered cases
+Clean up to make it more report oriented
 
 ```{r}
 library(dplyr)
@@ -251,7 +255,7 @@ ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
 ```
 ```{r}
 ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
-  #geom_line() +
+  geom_line() +
   labs(x="Days since number of cases reached 400", 
        y="Cumulative Cases", 
        title = "Exponential Projections of Cumulative Cases by Country",
@@ -261,8 +265,8 @@ ggplot(data = combined.countries, aes(date, amount, color = Country.Region)) +
   ylim(0,NA) +
   #geom_smooth(size=.75) +
   theme(legend.title=element_blank()) +
-  scale_y_log10() +
-  stat_smooth(method="lm",fullrange=TRUE)
+  scale_y_log10()
+  #stat_smooth(method="lm",fullrange=TRUE) 
 ```
 
 ```{r}
