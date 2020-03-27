@@ -4,29 +4,40 @@ author: "Peter Mehler"
 date: "3/18/2020"
 output: html_document
 ---
-data set: https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series
+#Introduction
+The dataset used in this analysis is John Hopkins' Covid-19 dataset found here:  https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series. The data is presented in two documents: one for cumulative confirmed cases and the other for cumulative confirmed deaths for most countries worldwide. This information is pulled from a multitude of sources including governments and the WHO, and synthesized in this document. Values are updated daily by the owners of the database.  
 
-```{r}
-confirmed_cases <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+Both number of confirmed cases and number of confirmed deaths will be important figures in this analysis. Number of deaths is the more reliable statistic as confirmed cases relies on testing frequency and capacity.  The number of confirmed cases is therefore a lower bound for the number of actual cases of COVID-19.  Changes in confirmed cases could also be due to an increase in testing, so these numbers should be viewed with caution.  
 
-deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+The importance of analyses like these cannot be understated.  After watching the news daily in the last two weeks, this dataset was main source for most of the statistics presented.  The number of confirmed cases, and how fast that number is growing, has been on the forefront of people's minds worldwide.  This dataset wields immense power and is extremely important to determine the severity of the situation that we find ourselves in, and is essential for strategic response.  
+
+```{r, include=FALSE}
+confirmed_cases <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv") #,check.names = FALSE to get rid of X prefix
+
+deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv") #,check.names = FALSE to get rid of X prefix
+```
+```{r, include=FALSE}
+#TO DO:
+# https://covidtracking.com/api/states.csv
+  # updated testing info
+# (`r codehere`)
+# 1. Make some predictions!
+#     + https://medium.com/@danilka/there-are-more-coronavirus-cases-than-you-think-6fa2fed50355
+#     + The early mortality rate is likely lower now than it will be at peak pandemic because of available medical resources
+#     + Assume death rate 3.4 (WHO), People who died contracted disease 19 days prior on average (5 to develope symptoms, 14 to die from symptoms) so for every person who dies there are about 29.4 who recover
+#     + total/(1+np.exp(-(day-maximum)/infection_speed))
+# 2. Clean up to make it more report oriented
+# 3. Make multiple province countries functional with clean_data()
+# 4. Hide/show toggle for code?  Check class notes
+# 5. Mortality now - Average Mortality this time of year - Covid Deaths = Deaths due to consequences of Covid
 ```
 
-
-#TO DO:
-1. Make some predictions!
-    + https://medium.com/@danilka/there-are-more-coronavirus-cases-than-you-think-6fa2fed50355
-    + The early mortality rate is likely lower now than it will be at peak pandemic because of available medical resources
-2. Clean up to make it more report oriented
-3. Make multiple province countries functional with clean_data()
-
-```{r}
+```{r, include=FALSE}
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
 ```
 
-# As of dataset update on 3/23, global recovered cases are not reported and US no longer shows state level data
 ```{r, include=FALSE}
 #state_group <- c("New York", "Washington", "California", "New Jersey", "Massachusetts", "Florida")
 ```
@@ -65,8 +76,8 @@ library(ggplot2)
 #   theme(legend.title = element_blank())
 ```
 
-Took too long to create a master dataset, so individual countries is a quick fix
-```{r}
+```{r, echo=FALSE}
+# Compute power too low to handle master dataset, so individual countries were chosen
 # region == 1 means country, region == 2 means province
 clean_data <- function(name, region){
    if (region==1){
@@ -183,10 +194,10 @@ clean_data <- function(name, region){
 ```
 
 
-# CHOOSE YOUR COUNTRY OR PROVINCE
-Only works for Countries without several provinces and single provinces \n
-region == 1 means country, region == 2 means province
-```{r}
+```{r, echo=FALSE}
+# # CHOOSE YOUR COUNTRY OR PROVINCE
+# 1. Only works for Provinces and Countries without several provinces
+# 2. region == 1 means country, region == 2 means province
 # data sets
 hubei <- clean_data("Hubei", 2)
 italy <- clean_data("Italy", 1)
@@ -197,7 +208,7 @@ spain <- clean_data("Spain",1)
 us <- clean_data("US",1)
 germany <- clean_data("Germany",1)
 ```
-```{r}
+```{r, echo=FALSE}
 # Row combine all datasets
 combined.countries <- rbind(hubei, italy, s.korea, iran, spain, us)
 ```
@@ -229,7 +240,10 @@ hubei %>%
   
 #Wuhan Lockdown January 23rd
 ```
-```{r}
+#Results
+
+Let's begin by looking at the progression of Hubei province.  With strict contact tracing, complete lockdown of all non-essential business, and a travel ban, China was able to stem the flow of the rate of infection in about eight weeks. The death rate hovers just below 4% for China. This pattern follows the standard S curve of infectious diseases where infection rate begins exponential, then looks more logarithmic past the inflection point.  
+```{r, echo=FALSE}
 ggplot(data = hubei, aes(date, amount, fill = type)) +
   geom_bar(position="stack", stat = "identity") +
   labs(title = "Cases, Deaths in Hubei Province Through Time",
@@ -237,19 +251,32 @@ ggplot(data = hubei, aes(date, amount, fill = type)) +
        y = "Amount") +
   theme(legend.title=element_blank())
 ```
-
-# Italy Plot
-
-```{r}
+  
+Let's look at Italy.One look at the number of cases on the left side and it becomes clear that this graph is worse than the previous.  Italy has surpassed Hubei, and soon to be China, in number of cases and deaths.  Not only that, but it is still experiencing exponential growth, meaning the rate of increase is increasing.  Let's look at a plot of how exponential Italy's cases and deaths are increasing.  
+```{r, echo=FALSE}
+ggplot(data = italy, aes(date, amount, fill = type)) +
+  geom_bar(position="stack", stat = "identity") +
+  theme(legend.title=element_blank()) +
+  labs(title = "Cases and Deaths in Italy Through Time",
+       x = "Date",
+       y = "Amount")
+```
+  
+Here, a number above 0 suggests an exponential increase in the type of report.  Although both deaths and cases are still increasing exponentially, the rate at which the number of new reports are occuring is falling.  Below 0, the disease can, in one respect, be considered under control, because the number of new cases is not building upon itself exponentially.   
+```{r, echo=FALSE}
 italy %>% 
-  filter(type=="cases") %>% 
-  ggplot(aes(x=date, y=double_derivative, group = 1)) +
-  labs(title = "italy", caption = "caption" ) +
+  #filter(type=="cases") %>% 
+  ggplot(aes(x=date, y=double_derivative, group = type, color = type)) +
+  labs(title = "Rate of Rate of Increase of Deaths and Cases in Italy", 
+       caption = "Error is hidden, but raw data was fairly volatile and the standard deviation is large.  Pattern remains meaninful and more rigorous analysis is necessary",
+       x = "Date",
+       y = "Daily Increase of Reports Compared to Previous Day") +
   #geom_line() + 
-  geom_smooth() +
-  theme_minimal() +
+  geom_smooth(se=F) +
+  theme(legend.title=element_blank()) +
    xlim(as.Date("2.15.20",format="%m.%d.%y"),NA)
 ```
+  
 ```{r, include=FALSE}
 us %>% 
   filter(type=="cases") %>% 
@@ -260,40 +287,58 @@ us %>%
   theme_minimal() +
    xlim(as.Date("2.15.20",format="%m.%d.%y"),NA)
 ```
-```{r}
+Let's look at the same plot, but for other countries and without deaths.   
+```{r, echo=FALSE}
 combined.countries %>% 
   filter(type=="cases") %>% 
   ggplot(aes(x=date, y=double_derivative, group = Country.Region, color = Country.Region)) +
-  labs(title = "Rate of Rate of Increase of Confirmed Cases by Country", caption = "caption" ) +
+  labs(title = "Rate of Rate of Increase of Confirmed Cases by Country", 
+       caption = "Standard deviation is significant  Pattern remains meaninful but more rigorous analysis is necessary",
+       x = "Date",
+       y = "Daily Increase of Reports Compared to Previous Day") +
   #geom_line() + 
   geom_smooth(se=F) +
   theme_minimal()
   #xlim(as.Date("1.23.20",format="%m.%d.%y"),NA)
 ```
-```{r}
-ggplot(data = italy, aes(date, amount, fill = type)) +
-  geom_bar(position="stack", stat = "identity") +
-  theme(legend.title=element_blank()) +
-  labs(title = "Cases, Deaths, and Recoveries in Italy Through Time",
+  
+Here there are two major trends I would like to point out.  The first is obviously how dramatic the rate of increase in the United States is.  Caught unprepared, the Virus was able to establish a foothold in NYC, a city with high population density, before society and the government implimented proper spread suppression procedures.  
+
+The other example I wish to highlight is Hubei's (Labeled China in the plot) line. The completed curve of the rate of the rate of increase will meander through the x-axis, past 0, and into negative numbers until new cases dwindle to almost 0 (barring another outbreak, which is still possible).  It's difficult to tell how close the US is to this transition, and more advanced models should be referenced for such information.  
+
+Here is the same plot, but for deaths.  Spain has struggled to contain the number of deaths.  
+
+```{r, echo=FALSE}
+combined.countries %>% 
+  filter(type=="deaths") %>% 
+  ggplot(aes(x=date, y=double_derivative, group = Country.Region, color = Country.Region)) +
+  labs(title = "Rate of Rate of Increase of Deaths by Country", 
+       caption = "Standard deviation is significant.  Pattern remains meaninful but more rigorous analysis is necessary",
        x = "Date",
-       y = "Amount")
+       y = "Daily Increase of Reports Compared to Previous Day") +
+  #geom_line() + 
+  geom_smooth(se=F) +
+  theme_minimal()
+  #xlim(as.Date("1.23.20",format="%m.%d.%y"),NA)
 ```
-```{r}
+  
+Let's look at death rates as percentages of cases.  Here I compare a country with one of the highest case fatality rates (Italy), with a country with one of the lowest (Germany).  It should be noted that this is an unfair comparison at the current date of writing as Italy has been dealing with the virus for a few weeks longer than Germany.  
+```{r, echo=FALSE}
 require(gridExtra)
 plot1 <- ggplot(data = italy, aes(date, amount, fill = type)) +
   geom_bar(position="fill", stat = "identity") +
-  labs(title = "Percentages of Case Statistics Italy", y="Percent", x="Date") +
+  labs(title = "Percentages of Case Deaths Italy", y="Percent", x="Date") +
   theme(legend.title=element_blank())
 plot2 <- ggplot(data = germany, aes(date, amount, fill = type)) +
   geom_bar(position="fill", stat = "identity") +
-  labs(title = "Percentages of Case Statistics Germany", y="Percent", x="Date") +
+  labs(title = "Percentages of Case Deaths Germany", y="Percent", x="Date") +
   theme(legend.title=element_blank())
 
 grid.arrange(plot1, plot2, ncol=2)
 ```
-
-
-```{r}
+  
+Below are the plots for cumulative deaths and cases since the beginning of the outbreak in various countries.  
+```{r, echo=FALSE}
 combined.countries %>%
   filter(type=="cases") %>%   # Have filtered by cases
   filter(amount>400) %>%    # Filter cases > 400
@@ -310,7 +355,7 @@ combined.countries %>%
          y="Cumulative Cases", 
          title = "Comparison of Cumulative Cases by Country",
          subtitle = "Beginning When Number of Infections is Above 400",
-         caption = "US represents only NY data and China represents only Hubei data") +
+         caption = "China represents only Hubei data") +
     geom_smooth(size=.75) +
     ylim(0,NA) +
     theme(legend.title=element_blank())
@@ -321,6 +366,8 @@ combined.countries %>%
 #Wuhan Lockdown 1.23.20
 #NY State orders lockdown
 ```
+   
+
 ```{r, include=FALSE}
 # How to determine Slope?  Doubling every ___ days?
 combined.countries %>% 
@@ -335,7 +382,7 @@ combined.countries %>%
          y="Cumulative Cases", 
          title = "Exponential Projections of Cumulative Cases by Country",
          subtitle = "Beginning When Number of Infections is Above 400",
-         caption = "US represents only NY data and China represents only Hubei data") +
+         caption = "China represents only Hubei data") +
     #xlim(NA,as.Date(50, origin="2019-12-31")) +
     ylim(0,NA) +
     #geom_smooth(size=.75) +
@@ -345,7 +392,7 @@ combined.countries %>%
     #stat_smooth(method="lm",fullrange=TRUE) 
 ```
 
-```{r}
+```{r, echo=FALSE}
 # Row combine all datasets
 combined.countries %>%
   filter(type=="deaths") %>%   # Have filtered by deaths
@@ -358,11 +405,12 @@ combined.countries %>%
     labs(x="Days since first Death", 
          y="Cumulative Deaths", 
          title = "Comparison of Cumulative Deaths by Country Beginning After First Death", 
-         caption = "US represents only NY data and China represents only Hubei data") +
+         caption = "China represents only Hubei data") +
     ylim(0,NA) +
     geom_smooth() +
     theme(legend.title=element_blank())
 ```
+  
 ```{r, include=FALSE}
 combined.countries %>%
   filter(type=="deaths") %>%   # Have filtered by deaths
@@ -375,14 +423,27 @@ combined.countries %>%
     labs(x="Days since first Death", 
          y="Cumulative Deaths", 
          title = "Exponential Projections of Cumulative Deaths by Country Beginning After First Death", 
-         caption = "US represents only NY data and China represents only Hubei data") +
+         caption = "China represents only Hubei data") +
     ylim(0,NA) +
     #geom_smooth() +
     theme(legend.title=element_blank()) +
     stat_smooth(method="lm",fullrange=TRUE)
 ```
+#Discussion
+The conclusions of this report are changing daily with the updates of the dataset. Centralized datasets such as these are not the only information source which should inspire action, but they can play a significant role.  Without data analysis during times of crisis such as this, we are relying on the individual beliefs of people. When an issue's scope is at the level of the entire world, no amount of intuition will ever surpass the insights of large data.  
 
+This is not to say that data is infalliable.  When looking into the sources of data and methods of data collection for this dataset, It becomes clear that it is far from perfect.  Each country's numbers rely on the government's honor that reports are valid, and assumptions must be made about the confidence of data collection at multiple levels of the pipeline.  
 
-Finding regression line for different subsets of data:
+Further work is being relentlessly pursued globally. As more data come out, more questions are able to be answered.  We are still unsure of the exact case fatality rate, the exact spread rate, or, perhaps most importantly, what measures best defend human life.
 
-Source: https://stackoverflow.com/questions/51355303/extract-slope-of-multiple-trend-lines-from-geom-smooth
+Aknowledgements:  
+
+https://medium.com/@tomaspueyo/coronavirus-the-hammer-and-the-dance-be9337092b56?fbclid=IwAR2xNhWfHPb1189m7moSCqS52LdWESHPF0UfXN8lf8ogZetYWUD8EONyGqY  
+
+https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
+
+https://stackoverflow.com/questions/51355303/extract-slope-of-multiple-trend-lines-from-geom-smooth    
+
+https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf  
+
+https://www.youtube.com/watch?v=Kas0tIxDvrg
