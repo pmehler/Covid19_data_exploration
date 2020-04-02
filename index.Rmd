@@ -20,7 +20,11 @@ deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/ma
 #TO DO:
 # https://covidtracking.com/api/states.csv
   # updated testing info
+
 # (`r codehere`)
+
+# Graph New Daily cases by Cumulative cases against each other, both on log scales!
+
 # 1. Make some predictions!
 #     + https://medium.com/@danilka/there-are-more-coronavirus-cases-than-you-think-6fa2fed50355
 #     + The early mortality rate is likely lower now than it will be at peak pandemic because of available medical resources
@@ -323,8 +327,11 @@ combined.countries %>%
 ```
   
 Let's look at death rates as percentages of cases.  Here I compare a country with one of the highest case fatality rates (Italy), with a country with one of the lowest (Germany).  It should be noted that this is an unfair comparison at the current date of writing as Italy has been dealing with the virus for a few weeks longer than Germany.  
-```{r, echo=FALSE}
+```{r, include=FALSE}
 require(gridExtra)
+```
+
+```{r, echo=FALSE}
 plot1 <- ggplot(data = italy, aes(date, amount, fill = type)) +
   geom_bar(position="fill", stat = "identity") +
   labs(title = "Percentages of Case Deaths Italy", y="Percent", x="Date") +
@@ -429,6 +436,51 @@ combined.countries %>%
     theme(legend.title=element_blank()) +
     stat_smooth(method="lm",fullrange=TRUE)
 ```
+
+```{r, include=FALSE}
+# add summed weekly column to prep for graph below
+combined.countries.cumulative <- combined.countries %>% 
+  filter(type=="cases") %>% 
+  group_by(Country.Region) %>% 
+  arrange( Country.Region, -as.integer(date))
+```
+```{r, include=FALSE}
+# adds weekly column which is a weekly sum of the slope column "Number of New Daily Cases in the Past Week"
+num.days = length(names(confirmed_cases))-4
+
+for(i in 1:(length(combined.countries.cumulative$slope))){
+  if(num.days-(i%%num.days) < 7){
+    combined.countries.cumulative$weekly[i] = sum(combined.countries.cumulative$slope[i:(i+num.days-(i%%num.days))])
+  }
+  else if(i%%num.days == 0){
+    combined.countries.cumulative$weekly[i] =combined.countries.cumulative$slope[i]
+  }
+  else{
+    combined.countries.cumulative$weekly[i] = sum(combined.countries.cumulative$slope[i:(i+6)])
+  }
+}
+```
+Which countries are experiencing exponential growth?  The following graph, inspired by Aatish Bhatia (https://aatishb.com/covidtrends/), graphs cumulative cases against daily new cases summed over the week prior to that day. The straighter the line of a given country, the more similar to true exponential growth in deaths or cases that country has.  The countries you see falling off that straight line pattern are beginning to see a slow down in the number of new cases. China's big bump was due to the one day redefinition of COVID-19.
+```{r, echo=FALSE}
+combined.countries.cumulative %>%
+  filter(amount>400) %>%    # Filter cases > 400
+  group_by(Country.Region) %>% 
+  mutate(date = as.integer(format(date, "%j"))) %>% 
+  mutate(date = date - date[length(date)]) %>% # Change date to days since cases > 400
+  ggplot(aes(amount, weekly, color = Country.Region)) +
+    # geom_line() +
+    labs(x="Cumulative Cases", 
+         y="Number of New Daily Cases in the Past Week", 
+         title = "Which countries have exponential case growth?",
+         subtitle = "Beginning When Number of Infections is Above 400",
+         caption = "China represents only Hubei data") +
+    geom_smooth(size=.5, se=F) +
+    scale_y_log10() +
+    scale_x_log10() +
+    theme(legend.title=element_blank())
+```
+  
+
 #Discussion
 The conclusions of this report are changing daily with the updates of the dataset. Centralized datasets such as these are not the only information source which should inspire action, but they can play a significant role.  Without data analysis during times of crisis such as this, we are relying on the individual beliefs of people. When an issue's scope is at the level of the entire world, no amount of intuition will ever surpass the insights of large data.  
 
@@ -438,6 +490,8 @@ Further work is being relentlessly pursued globally. As more data come out, more
 
 Aknowledgements:  
 
+https://aatishb.com/covidtrends/
+
 https://medium.com/@tomaspueyo/coronavirus-the-hammer-and-the-dance-be9337092b56?fbclid=IwAR2xNhWfHPb1189m7moSCqS52LdWESHPF0UfXN8lf8ogZetYWUD8EONyGqY  
 
 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
@@ -446,4 +500,6 @@ https://stackoverflow.com/questions/51355303/extract-slope-of-multiple-trend-lin
 
 https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf  
 
-https://www.youtube.com/watch?v=Kas0tIxDvrg
+https://www.youtube.com/watch?v=Kas0tIxDvrg  
+
+https://www.youtube.com/watch?v=54XLXg4fYsc&feature=share&fbclid=IwAR2MKASftMjgiAZgXzCF05iccj1nn2tA3H13LCP1EvDHyhXv1LUgPblVD-U
