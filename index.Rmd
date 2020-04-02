@@ -9,7 +9,9 @@ The dataset used in this analysis is John Hopkins' Covid-19 dataset found here: 
 
 Both number of confirmed cases and number of confirmed deaths will be important figures in this analysis. Number of deaths is the more reliable statistic as confirmed cases relies on testing frequency and capacity.  The number of confirmed cases is therefore a lower bound for the number of actual cases of COVID-19.  Changes in confirmed cases could also be due to an increase in testing, so these numbers should be viewed with caution.  
 
-The importance of analyses like these cannot be understated.  After watching the news daily in the last two weeks, this dataset was main source for most of the statistics presented.  The number of confirmed cases, and how fast that number is growing, has been on the forefront of people's minds worldwide.  This dataset wields immense power and is extremely important to determine the severity of the situation that we find ourselves in, and is essential for strategic response.  
+The importance of analyses like these cannot be understated.  After watching the news daily in the last two weeks, this dataset was main source for most of the statistics presented.  The number of confirmed cases, and how fast that number is growing, has been on the forefront of people's minds worldwide.  This dataset wields immense power and is extremely important to determine the severity of the situation that we find ourselves in, and is essential for strategic response.
+
+*Text does not update with data, so analysis is as of March 26th* I'll update it at some point in the future.  
 
 ```{r, include=FALSE}
 confirmed_cases <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv") #,check.names = FALSE to get rid of X prefix
