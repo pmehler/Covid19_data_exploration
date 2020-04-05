@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Data Analysis"
 author: "Peter Mehler"
-date: "3/18/2020"
+date: "Updated April 5th 2020"
 output: html_document
 ---
 #Introduction
@@ -17,6 +17,8 @@ The importance of analyses like these cannot be understated.  After watching the
 confirmed_cases <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv") #,check.names = FALSE to get rid of X prefix
 
 deaths <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv") #,check.names = FALSE to get rid of X prefix
+
+states_data <- read.csv("https://covidtracking.com/api/v1/states/current.csv")
 ```
 ```{r, include=FALSE}
 #TO DO:
@@ -256,6 +258,7 @@ ggplot(data = hubei, aes(date, amount, fill = type)) +
        x = "Date",
        y = "Amount") +
   theme(legend.title=element_blank())
+
 ```
   
 Let's look at Italy.One look at the number of cases on the left side and it becomes clear that this graph is worse than the previous.  Italy has surpassed Hubei, and soon to be China, in number of cases and deaths.  Not only that, but it is still experiencing exponential growth, meaning the rate of increase is increasing.  Let's look at a plot of how exponential Italy's cases and deaths are increasing.  
@@ -328,12 +331,13 @@ combined.countries %>%
   #xlim(as.Date("1.23.20",format="%m.%d.%y"),NA)
 ```
   
-Let's look at death rates as percentages of cases.  Here I compare a country with one of the highest case fatality rates (Italy), with a country with one of the lowest (Germany).  It should be noted that this is an unfair comparison at the current date of writing as Italy has been dealing with the virus for a few weeks longer than Germany.  
+ 
 ```{r, include=FALSE}
+# Let's look at death rates as percentages of cases.  Here I compare a country with one of the highest case fatality rates (Italy), with a country with one of the lowest (Germany).  It should be noted that this is an unfair comparison at the current date of writing as Italy has been dealing with the virus for a few weeks longer than Germany. 
 require(gridExtra)
 ```
 
-```{r, echo=FALSE}
+```{r, include=FALSE}
 plot1 <- ggplot(data = italy, aes(date, amount, fill = type)) +
   geom_bar(position="fill", stat = "identity") +
   labs(title = "Percentages of Case Deaths Italy", y="Percent", x="Date") +
@@ -482,6 +486,40 @@ combined.countries.cumulative %>%
     theme(legend.title=element_blank())
 ```
   
+```{r, include=F}
+library(maps)
+library(openintro)
+#world_map <- map_data("world")  #to map countries in the world
+states_map <- map_data("state") #to map states in the US
+```
+```{r, include=F}
+states_data <- states_data %>% 
+  mutate(state = tolower(abbr2state(state))) %>% 
+  rename(region = state)
+```
+```{r, include=F}
+states_geo <- left_join(states_map, states_data, by = "region")
+```
+```{r, echo=F}
+states_geo %>%
+  ggplot(aes(long, lat, fill=positive)) +
+    labs(title = "Confirmed Cases of COVID-19", x = "Longitude", y = "Latitude") +
+    geom_polygon(aes(group=group), col = "black") +
+    coord_fixed(ratio = 1.15)  +
+    scale_fill_gradientn(colors = c('blue','yellow', 'red')) + #customize colors  colors = brewer.pal(13, "Spectral")
+    guides(fill=guide_legend(title="Confirmed Cases"))
+```  
+```{r, echo=F}
+states_geo %>%
+  ggplot(aes(long, lat, fill=death)) +
+    labs(title = "Deaths from COVID-19", x = "Longitude", y = "Latitude") +
+    geom_polygon(aes(group=group), col = "black") +
+    coord_fixed(ratio = 1.15)  +
+    scale_fill_gradientn(colors = c('blue','yellow', 'red')) + #customize colors  colors = brewer.pal(13, "Spectral")
+    guides(fill=guide_legend(title="Deaths"))
+```
+  
+
 
 #Discussion
 The conclusions of this report are changing daily with the updates of the dataset. Centralized datasets such as these are not the only information source which should inspire action, but they can play a significant role.  Without data analysis during times of crisis such as this, we are relying on the individual beliefs of people. When an issue's scope is at the level of the entire world, no amount of intuition will ever surpass the insights of large data.  
