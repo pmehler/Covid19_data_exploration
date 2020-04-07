@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Data Analysis"
 author: "Peter Mehler"
-date: "Updated April 5th 2020"
+date: "Updated April 7th 2020"
 output: html_document
 ---
 #Introduction
@@ -22,22 +22,11 @@ states_data <- read.csv("https://covidtracking.com/api/v1/states/current.csv")
 ```
 ```{r, include=FALSE}
 #TO DO:
-# https://covidtracking.com/api/states.csv
-  # updated testing info
 
-# (`r codehere`)
-
-# Graph New Daily cases by Cumulative cases against each other, both on log scales!
-
-# 1. Make some predictions!
-#     + https://medium.com/@danilka/there-are-more-coronavirus-cases-than-you-think-6fa2fed50355
-#     + The early mortality rate is likely lower now than it will be at peak pandemic because of available medical resources
-#     + Assume death rate 3.4 (WHO), People who died contracted disease 19 days prior on average (5 to develope symptoms, 14 to die from symptoms) so for every person who dies there are about 29.4 who recover
-#     + total/(1+np.exp(-(day-maximum)/infection_speed))
+# 1. Animate?
+# 1.5 World Map?
 # 2. Clean up to make it more report oriented
 # 3. Make multiple province countries functional with clean_data()
-# 4. Hide/show toggle for code?  Check class notes
-# 5. Mortality now - Average Mortality this time of year - Covid Deaths = Deaths due to consequences of Covid
 ```
 
 ```{r, include=FALSE}
@@ -474,13 +463,13 @@ combined.countries.cumulative %>%
   mutate(date = as.integer(format(date, "%j"))) %>% 
   mutate(date = date - date[length(date)]) %>% # Change date to days since cases > 400
   ggplot(aes(amount, weekly, color = Country.Region)) +
-    # geom_line() +
+    geom_line() +
     labs(x="Cumulative Cases", 
          y="Number of New Daily Cases in the Past Week", 
          title = "Which countries have exponential case growth?",
          subtitle = "Beginning When Number of Infections is Above 400",
          caption = "China represents only Hubei data") +
-    geom_smooth(size=.5, se=F) +
+    #geom_smooth(size=.5, se=F) +
     scale_y_log10() +
     scale_x_log10() +
     theme(legend.title=element_blank())
@@ -519,7 +508,62 @@ states_geo %>%
     guides(fill=guide_legend(title="Deaths"))
 ```
   
+```{r, include=F}
+library(tidycensus)
+library(RColorBrewer)
+```
+  
+```{r, include=F}
+nyc_counties <- c("Kings County, New York","New York County, New York", "Queens County, New York", "Richmond County, New York", "Bronx County, New York")
 
+nyc_geo <- get_acs(geography = "county",
+                        state = "New York", # if we only want NY counties
+                        table = "B03001",
+                        year = 2018,
+                        survey = "acs5",
+                        geometry = TRUE)
+
+
+```
+```{r, include=F}
+boroughs <- read.csv("https://raw.githubusercontent.com/nychealth/coronavirus-data/master/boro.csv")
+```
+
+```{r, include=F}
+boroughs <- boroughs %>% 
+  filter(BOROUGH_GROUP != "Citywide") %>% 
+  arrange(BOROUGH_GROUP)
+
+boroughs$NAME <- nyc_counties
+```
+
+```{r, include=F}
+nyc_geo <- nyc_geo %>% 
+  filter(NAME %in% nyc_counties)
+```
+
+```{r, include=F}
+nyc_geo <- left_join(nyc_geo, boroughs, by = "NAME")
+```
+```{r, echo=F}
+nyc_geo %>% 
+  ggplot(aes(fill=COVID_CASE_RATE)) +
+  geom_sf() +
+  geom_sf_text(aes(label = BOROUGH_GROUP), fontface="bold") +
+  labs(title = "Rate of COVID-19 Cases by Borough", subtitle = "Rate = Cases per 100,000 residents", x = "Latitude", y = "Longitude") +
+  scale_fill_gradientn(colors = brewer.pal(9, "YlOrRd")) + #customize colors  colors = brewer.pal(13, "Spectral")
+  guides(fill=guide_legend(title="Rate"))
+```
+```{r, echo=F}
+nyc_geo %>% 
+  ggplot(aes(fill=COVID_CASE_COUNT)) +
+  geom_sf() +
+  geom_sf_text(aes(label = BOROUGH_GROUP), fontface="bold") +
+  labs(title = "COVID-19 Cases by Borough", x = "Latitude", y = "Longitude") +
+  scale_fill_gradientn(colors = brewer.pal(9, "YlOrRd")) + #customize colors  colors = brewer.pal(13, "Spectral")
+  guides(fill=guide_legend(title="Count"))
+```
+  
 
 #Discussion
 The conclusions of this report are changing daily with the updates of the dataset. Centralized datasets such as these are not the only information source which should inspire action, but they can play a significant role.  Without data analysis during times of crisis such as this, we are relying on the individual beliefs of people. When an issue's scope is at the level of the entire world, no amount of intuition will ever surpass the insights of large data.  
