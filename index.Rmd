@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Data Analysis"
 author: "Peter Mehler"
-date: "Updated April 7th 2020"
+date: "Updated April 8th 2020"
 output: html_document
 ---
 #Introduction
