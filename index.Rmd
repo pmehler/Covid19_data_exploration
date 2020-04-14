@@ -261,7 +261,7 @@ ggplot(data = italy, aes(date, amount, fill = type)) +
 ```
   
 Here, a number above 0 suggests an exponential increase in the type of report.  Although both deaths and cases are still increasing exponentially, the rate at which the number of new reports are occuring is falling.  Below 0, the disease can, in one respect, be considered under control, because the number of new cases is not building upon itself exponentially.   
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 italy %>% 
   #filter(type=="cases") %>% 
   ggplot(aes(x=date, y=double_derivative, group = type, color = type)) +
@@ -270,7 +270,7 @@ italy %>%
        x = "Date",
        y = "Daily Increase of Reports Compared to Previous Day") +
   #geom_line() + 
-  geom_smooth(se=F) +
+  geom_smooth(se=F, na.rm = T) +
   theme(legend.title=element_blank()) +
    xlim(as.Date("2.15.20",format="%m.%d.%y"),NA)
 ```
@@ -286,7 +286,7 @@ us %>%
    xlim(as.Date("2.15.20",format="%m.%d.%y"),NA)
 ```
 Let's look at the same plot, but for other countries and without deaths.   
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 combined.countries %>% 
   filter(type=="cases") %>% 
   ggplot(aes(x=date, y=double_derivative, group = Country.Region, color = Country.Region)) +
@@ -306,7 +306,7 @@ The other example I wish to highlight is Hubei's (Labeled China in the plot) lin
 
 Here is the same plot, but for deaths.  Spain has struggled to contain the number of deaths.  
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 combined.countries %>% 
   filter(type=="deaths") %>% 
   ggplot(aes(x=date, y=double_derivative, group = Country.Region, color = Country.Region)) +
@@ -340,7 +340,7 @@ grid.arrange(plot1, plot2, ncol=2)
 ```
   
 Below are the plots for cumulative deaths and cases since the beginning of the outbreak in various countries.  
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 combined.countries %>%
   filter(type=="cases") %>%   # Have filtered by cases
   filter(amount>400) %>%    # Filter cases > 400
@@ -358,7 +358,7 @@ combined.countries %>%
          title = "Comparison of Cumulative Cases by Country",
          subtitle = "Beginning When Number of Infections is Above 400",
          caption = "China represents only Hubei data") +
-    geom_smooth(size=.75) +
+    geom_smooth(size=.75, na.rm = T) +
     ylim(0,NA) +
     theme(legend.title=element_blank())
                         
@@ -394,7 +394,7 @@ combined.countries %>%
     #stat_smooth(method="lm",fullrange=TRUE) 
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 # Row combine all datasets
 combined.countries %>%
   filter(type=="deaths") %>%   # Have filtered by deaths
@@ -409,7 +409,7 @@ combined.countries %>%
          title = "Comparison of Cumulative Deaths by Country Beginning After First Death", 
          caption = "China represents only Hubei data") +
     ylim(0,NA) +
-    geom_smooth() +
+    geom_smooth(, na.rm = T) +
     theme(legend.title=element_blank())
 ```
   
@@ -473,6 +473,8 @@ combined.countries.cumulative %>%
     scale_y_log10() +
     scale_x_log10() +
     theme(legend.title=element_blank())
+
+    
 ```
   
 ```{r, include=F}
