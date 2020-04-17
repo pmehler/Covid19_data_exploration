@@ -11,7 +11,7 @@ Both number of confirmed cases and number of confirmed deaths will be important 
 
 The importance of analyses like these cannot be understated.  After watching the news daily in the last two weeks, this dataset was main source for most of the statistics presented.  The number of confirmed cases, and how fast that number is growing, has been on the forefront of people's minds worldwide.  This dataset wields immense power and is extremely important to determine the severity of the situation that we find ourselves in, and is essential for strategic response.
 
-*Text does not update with data, so analysis is as of March 26th* I'll update it at some point in the future.  
+*Text does not update with data, analysis is as of March 26th*    
 
 ```{r, include=FALSE}
 confirmed_cases <- read.csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv") #,check.names = FALSE to get rid of X prefix
@@ -239,7 +239,7 @@ hubei %>%
 ```
 #Results
 
-Let's begin by looking at the progression of Hubei province.  With strict contact tracing, complete lockdown of all non-essential business, and a travel ban, China was able to stem the flow of the rate of infection in about eight weeks. The death rate hovers just below 4% for China. This pattern follows the standard S curve of infectious diseases where infection rate begins exponential, then looks more logarithmic past the inflection point.  
+Let's begin by looking at the progression of Hubei province.  With strict contact tracing, complete lockdown of all non-essential business, and a travel ban, China was able to stem the flow of the rate of infection in about eight weeks. The death rate hovers just below 4% for China. This pattern follows the standard S curve of infectious diseases where infection rate begins exponential, then tapers off.  
 ```{r, echo=FALSE}
 ggplot(data = hubei, aes(date, amount, fill = type)) +
   geom_bar(position="stack", stat = "identity") +
@@ -250,7 +250,7 @@ ggplot(data = hubei, aes(date, amount, fill = type)) +
 
 ```
   
-Let's look at Italy.One look at the number of cases on the left side and it becomes clear that this graph is worse than the previous.  Italy has surpassed Hubei, and soon to be China, in number of cases and deaths.  Not only that, but it is still experiencing exponential growth, meaning the rate of increase is increasing.  Let's look at a plot of how exponential Italy's cases and deaths are increasing.  
+Let's look at Italy.One look at the number of cases on the left side and it becomes clear that this graph is worse than the previous.  Italy's new daily cases are seeing a drop, we take a look at the rate of the drop in the next graph.    
 ```{r, echo=FALSE}
 ggplot(data = italy, aes(date, amount, fill = type)) +
   geom_bar(position="stack", stat = "identity") +
@@ -260,7 +260,7 @@ ggplot(data = italy, aes(date, amount, fill = type)) +
        y = "Amount")
 ```
   
-Here, a number above 0 suggests an exponential increase in the type of report.  Although both deaths and cases are still increasing exponentially, the rate at which the number of new reports are occuring is falling.  Below 0, the disease can, in one respect, be considered under control, because the number of new cases is not building upon itself exponentially.   
+Here, a number above 0 suggests an exponential increase in deaths and new cases, and a number below 0 suggests a falling rate of infection. The rate at which the number of new reports are occuring is falling.  Below 0, the disease can, in one respect, be considered under control, because the number of new cases is not building upon itself exponentially.   
 ```{r, echo=FALSE, message=FALSE}
 italy %>% 
   #filter(type=="cases") %>% 
@@ -300,11 +300,11 @@ combined.countries %>%
   #xlim(as.Date("1.23.20",format="%m.%d.%y"),NA)
 ```
   
-Here there are two major trends I would like to point out.  The first is obviously how dramatic the rate of increase in the United States is.  Caught unprepared, the Virus was able to establish a foothold in NYC, a city with high population density, before society and the government implimented proper spread suppression procedures.  
+Here there are two major trends I would like to point out.  The first is obviously how dramatic the rate of increase in the United States was.  Caught unprepared, the Virus was able to establish a foothold in NYC, a city with high population density, before society and the government implimented proper spread suppression procedures.  
 
-The other example I wish to highlight is Hubei's (Labeled China in the plot) line. The completed curve of the rate of the rate of increase will meander through the x-axis, past 0, and into negative numbers until new cases dwindle to almost 0 (barring another outbreak, which is still possible).  It's difficult to tell how close the US is to this transition, and more advanced models should be referenced for such information.  
+The other example I wish to highlight is Hubei's (Labeled China in the plot) line. The completed curve of the rate of the rate of increase will meander through the x-axis, past 0, and into negative numbers until new cases dwindle to almost 0 (barring another outbreak, which is still possible).  
 
-Here is the same plot, but for deaths.  Spain has struggled to contain the number of deaths.  
+Here is the same plot, but for deaths.  
 
 ```{r, echo=FALSE, message=FALSE}
 combined.countries %>% 
@@ -409,7 +409,7 @@ combined.countries %>%
          title = "Comparison of Cumulative Deaths by Country Beginning After First Death", 
          caption = "China represents only Hubei data") +
     ylim(0,NA) +
-    geom_smooth(, na.rm = T) +
+    geom_smooth(size=.75, na.rm = T) +
     theme(legend.title=element_blank())
 ```
   
@@ -455,7 +455,7 @@ for(i in 1:(length(combined.countries.cumulative$slope))){
   }
 }
 ```
-Which countries are experiencing exponential growth?  The following graph, inspired by Aatish Bhatia (https://aatishb.com/covidtrends/), graphs cumulative cases against daily new cases summed over the week prior to that day. The straighter the line of a given country, the more similar to true exponential growth in deaths or cases that country has.  The countries you see falling off that straight line pattern are beginning to see a slow down in the number of new cases. China's big bump was due to the one day redefinition of COVID-19.
+Which countries are experiencing exponential growth?  The following graph, inspired by Aatish Bhatia (https://aatishb.com/covidtrends/), graphs cumulative cases against daily new cases summed over the week prior to that day. The straighter the line of a given country, the more similar to true exponential growth in deaths or cases that country has.  The countries you see falling off that straight line pattern are beginning to see a slow down in the number of new cases.
 ```{r, echo=FALSE}
 combined.countries.cumulative %>%
   filter(amount>400) %>%    # Filter cases > 400
@@ -491,6 +491,7 @@ states_data <- states_data %>%
 ```{r, include=F}
 states_geo <- left_join(states_map, states_data, by = "region")
 ```
+Maps below are unfinished, and I am still playing around with them!
 ```{r, echo=F}
 states_geo %>%
   ggplot(aes(long, lat, fill=positive)) +
