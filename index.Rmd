@@ -1,7 +1,7 @@
 ---
 title: "Covid-19 Data Analysis"
 author: "Peter Mehler"
-date: "Updated April 17th 2020"
+date: "Updated April 28th 2020"
 output: html_document
 ---
 #Introduction
@@ -204,10 +204,11 @@ iran <- clean_data("Iran", 1)
 spain <- clean_data("Spain",1)
 us <- clean_data("US",1)
 germany <- clean_data("Germany",1)
+sweden <- clean_data("Sweden",1)
 ```
 ```{r, echo=FALSE}
 # Row combine all datasets
-combined.countries <- rbind(hubei, italy, s.korea, iran, spain, us)
+combined.countries <- rbind(germany, italy, s.korea, iran, spain, us, sweden)
 ```
 
 
@@ -456,8 +457,14 @@ for(i in 1:(length(combined.countries.cumulative$slope))){
 }
 ```
 Which countries are experiencing exponential growth?  The following graph, inspired by Aatish Bhatia (https://aatishb.com/covidtrends/), graphs cumulative cases against daily new cases summed over the week prior to that day. The straighter the line of a given country, the more similar to true exponential growth in deaths or cases that country has.  The countries you see falling off that straight line pattern are beginning to see a slow down in the number of new cases.
+```{r, include=FALSE}
+library(gganimate)
+```
+
 ```{r, echo=FALSE}
-combined.countries.cumulative %>%
+# This will need to be edited to avoid log(0) when countries begin to have 0 new cases
+options(scipen=10000)
+P <- combined.countries.cumulative %>%
   filter(amount>400) %>%    # Filter cases > 400
   group_by(Country.Region) %>% 
   mutate(date = as.integer(format(date, "%j"))) %>% 
@@ -468,14 +475,20 @@ combined.countries.cumulative %>%
          y="Number of New Daily Cases in the Past Week", 
          title = "Which countries have exponential case growth?",
          subtitle = "Beginning When Number of Infections is Above 400",
-         caption = "China represents only Hubei data") +
+         caption = "") +
     #geom_smooth(size=.5, se=F) +
     scale_y_log10() +
     scale_x_log10() +
-    theme(legend.title=element_blank())
-
-    
+    theme(legend.title=element_blank()) +
+    ## ADD THIS CODE TO ANIMATE
+    transition_reveal(date)
 ```
+```{r, include=FALSE}
+#anim_save("corona_cases.gif", animation=p )
+```
+
+![](corona_cases.gif)  
+
   
 ```{r, include=F}
 library(maps)
